@@ -1,0 +1,122 @@
+library(leaflet)    # The map-making package
+library(geojsonio)  # A package for geographic and spatial data, requires the latest version of dplyr
+library(dplyr)      # Used for data manipulation and merging
+library(htmltools)
+library(tidyr)     
+library(ggplot2)   
+library(readr)
+library(plotly)   # for interactive visuals
+library(stringr)  # to process character strings
+library(forcats)
+#Read all the data
+shapeurl <- "https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json"
+WorldCountry <- geojson_read(shapeurl, what = "sp")
+co2<-read.csv("CO2.csv")
+happiness<-read.csv("2015.csv")
+education<-read.csv("educationExpen.csv")
+gdp<-read.csv("GDP.csv")
+homicides<-read.csv("homicides.csv")
+lifeFemale<-read.csv("LifeExpenFemale.csv")
+lifeMale<-read.csv("LifeExpectMale.csv")
+head(lifeMale)
+rd<-read.csv("R&D.csv")
+#Clean education data
+education[,3:59]<-list(NULL)
+education[,4:6]<-list(NULL)
+colnames(education)[3]<-parse_number(colnames(education)[3])
+colnames(education)[3]<-"Education"
+#Clean co2 data
+co2[,3:58]<-list(NULL)
+co2[,4:7]<-list(NULL)
+colnames(co2)[3]<-parse_number(colnames(co2)[3])
+colnames(co2)[3]<-"CO2"
+#Clean gdp data
+gdp[,3:59]<-list(NULL)
+gdp[,4:6]<-list(NULL)
+colnames(gdp)[3]<-parse_number(colnames(gdp)[3])
+colnames(gdp)[3]<-"GDP"
+#Clean homicides data
+homicides[,3:59]<-list(NULL)
+homicides[,4:6]<-list(NULL)
+colnames(homicides)[3]<-parse_number(colnames(homicides)[3])
+colnames(homicides)[3]<-"Homicides"
+#Clean lifeFemale data
+lifeFemale[,3:59]<-list(NULL)
+lifeFemale[,4:6]<-list(NULL)
+colnames(lifeFemale)[3]<-parse_number(colnames(lifeFemale)[3])
+#Clean lifeMale data
+lifeMale[,3:59]<-list(NULL)
+lifeMale[,4:6]<-list(NULL)
+colnames(lifeMale)[3]<-parse_number(colnames(lifeMale)[3])
+#Clean r&d data
+rd[,3:59]<-list(NULL)
+rd[,4:6]<-list(NULL)
+colnames(rd)[3]<-parse_number(colnames(rd)[3])
+colnames(rd)[3]<-"RD"
+#combin data for female and male life expectance 
+life<-full_join(x = lifeFemale, y = lifeMale, by = "Country.Code")
+life[,1]<-list(NULL)
+colnames(life)[2]<-"Female"
+colnames(life)[3]<-"Country"
+colnames(life)[4]<-"Male"
+life<-filter(life, Female != "NA" | Male != "NA")
+life$average = (life$Female+life$Male)/2
+#Combine the rest of the data frame with the happiness data frame
+overall<- full_join(x=life, y=rd, by="Country.Code") 
+colnames(overall)[3]="Country"
+overall[,6]<-list(NULL)
+overall<- full_join(x=overall, y=homicides, by="Country.Code") 
+colnames(overall)[3]="Country"
+overall[,7]<-list(NULL)
+overall<-full_join(x=overall, y=gdp, by="Country.Code")
+overall[,8]<-list(NULL)
+overall<-full_join(x=overall, y=education, by="Country.Code")
+overall[,9]<-list(NULL)
+overall<-full_join(x=overall, y=co2, by="Country.Code")
+overall[,10]<-list(NULL)
+colnames(overall)[3]<-"Country"
+overall<-left_join(x = happiness, y = overall, by = "Country")
+overall[,5:8]<-list(NULL)
+overall[,7:8]<-list(NULL)
+
+CountryData <- left_join(data.frame(Name = WorldCountry$name), overall, by = c("Name" ="Country"))
+head(CountryData)
+CountryData<-filter(CountryData, Happiness.Rank != "NA")
+
+##### Graphs 
+#Relationship between happyiness score and Freedom
+p <- plot_ly(CountryData, x = ~Freedom, color = I("blue")) %>%
+  add_markers(y = ~Happiness.Score, text = ~Name, showlegend = FALSE) %>%
+  add_lines(y = ~fitted(loess(Happiness.Score ~ Freedom)),
+            line = list(color = '#07A4B5'),
+            name = "Loess Smoother", showlegend = TRUE) %>%
+  layout(xaxis = list(title = 'Happiness Score'),
+         yaxis = list(title = 'Freedom'),
+         legend = list(x = 10, y = 1))
+
+#Relationship between happyiness score and Trust Government and Corruption
+p2<- plot_ly(CountryData, x = ~Trust..Government.Corruption., color = I("blue")) %>%
+  add_markers(y = ~Happiness.Score, text = ~Name, showlegend = FALSE) %>%
+  add_lines(y = ~fitted(lm(Happiness.Score ~ Trust..Government.Corruption.)),
+            line = list(color = '#07A4B5'),
+            name = "Lm Smoother", showlegend = TRUE) %>%
+  layout(xaxis = list(title = 'Happiness Score'),
+         yaxis = list(title = 'Trust..Government.Corruption.'),
+         legend = list(x = 10, y = 1))
+
+#Relationship between happyiness score and Trust Government and Corruption
+ggplot(data=CountryData, aes(x=average, y=Happiness.Score )) +      
+  geom_point(shape = 1, color = "darkorange") +                                     
+  geom_smooth(method=lm,  color="orange") +                  
+  labs(title="Happiness Score and Life Expetency")
+
+p2<- plot_ly(CountryData, x = ~GDP, color = I("blue")) %>%
+  add_markers(y = ~Happiness.Score, text = ~Name, showlegend = FALSE) %>%
+  add_lines(y = ~fitted(lm(Happiness.Score ~ GDP)),
+            line = list(color = '#07A4B5'),
+            name = "Lm Smoother", showlegend = TRUE) %>%
+  layout(xaxis = list(title = 'Happiness Score'),
+         yaxis = list(title = 'Trust..Government.Corruption.'),
+         legend = list(x = 10, y = 1))
+
+CountryData
