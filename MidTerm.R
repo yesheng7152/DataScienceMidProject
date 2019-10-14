@@ -168,13 +168,58 @@ p8 <- plot_ly(CountryData %>% filter(!is.na(CO2)), x = ~CO2, color = I("blue")) 
          legend = list(x = 10, y = 1))
 
 
-#####Maps:
+#####Maps(1):
+pal <- colorNumeric(
+  palette = "Blues",
+  domain = CountryData$Happiness.Score)
+pal2 <- colorNumeric(
+  palette = "Reds",
+  domain = CountryData$Freedom)
+
+myLabels <- paste("<strong>", CountryData$Country, "</strong>", "<br/>", 
+                  "Happiness Rank:", CountryData$Happiness.Rank)
+myPopups <- paste("Freedom", CountryData$Freedom)
+
+Map <- leaflet(WorldCountry) %>% addTiles() %>% 
+  addPolygons(
+    fillColor = pal(CountryData$Happiness.Score),
+    weight = 2,
+    opacity = 1,
+    color = "white",
+    fillOpacity = 0.8,
+    highlight = highlightOptions(weight = 3,
+                                 color = "grey",
+                                 fillOpacity = 0.5,
+                                 bringToFront = TRUE),
+    label = lapply(myLabels, HTML),
+    popup = myPopups) %>%
+  addPolygons(
+    fillColor = pal2(CountryData$Freedom),
+    weight = 2,
+    opacity = 1,
+    color = "white",
+    fillOpacity = 0.2,
+    highlight = highlightOptions(weight = 3,
+                                 color = "grey",
+                                 fillOpacity = 0.5,
+                                 bringToFront = TRUE),
+    label = lapply(myLabels, HTML),
+    popup = myPopups)%>%
+  #addLegend(pal = pal, values = CountryData$Happiness.Score,
+   #         title = "Life Expectancy", position = "bottomright")%>%
+  addLegend(pal = pal2, values = CountryData$Freedom,
+            title = "Life Expectancy", position = "bottomright")
+
+
+
+
+#####Maps(2):
 pal <- colorNumeric(
   palette = "Blues",
   domain = CountryData$Happiness.Score)
 myLabels <- paste("<strong>", CountryData$Country, "</strong>", "<br/>", 
-                  "Life Expectancy:", CountryData$Happiness.Score)
-myPopups <- paste("Happy Planet Rank", CountryData$Happiness.Rank)
+                  "Happiness Rank:", CountryData$Happiness.Rank)
+myPopups <- paste("Freedom", CountryData$Freedom)
 
 Map <- leaflet(WorldCountry) %>% addTiles() %>% 
   addPolygons(
@@ -189,14 +234,21 @@ Map <- leaflet(WorldCountry) %>% addTiles() %>%
                                  bringToFront = TRUE),
     label = lapply(myLabels, HTML),
     popup = myPopups) %>%
+  addPolygons(
+    fillColor = pal2(CountryData$Freedom),
+    weight = 2,
+    opacity = 1,
+    color = "white",
+    fillOpacity = 0.3,
+    highlight = highlightOptions(weight = 3,
+                                 color = "grey",
+                                 fillOpacity = 0.3,
+                                 bringToFront = TRUE),
+    label = lapply(myLabels, HTML),
+    popup = myPopups)%>%
   addLegend(pal = pal, values = CountryData$Happiness.Score,
+           title = "Life Expectancy", position = "bottomleft")%>%
+  addLegend(pal = pal2, values = CountryData$Freedom,
             title = "Life Expectancy", position = "bottomright")
-
-
-
-
-
-
-
 
 
