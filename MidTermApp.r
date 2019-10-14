@@ -1,21 +1,34 @@
 library(shiny)
+library(plotly)
 # See above for the definitions of ui and server
 ui <- fluidPage(
   # App title ----
   titlePanel("Hello Shiny!"),
   
-  # Sidebar layout with input and output definitions ----
+  # Select layout with input and output definitions ----
   sidebarLayout(
     
-    # Sidebar panel for inputs ----
+    # Select panel for inputs ----
     sidebarPanel(
-      
-      # Input: Slider for the number of bins ----
-      sliderInput(inputId = "bins",
-                  label = "Number of bins:",
-                  min = 1,
-                  max = 50,
-                  value = 30)
+      # Input: Select for the variable to see the relationship with Happiness Score ----
+      selectInput("var",
+                  label = "Choose a second varible to see its relationship with Happiness Score",
+                  choices = list("Freedom",
+                                 "Trust Government and Corruption",
+                                 "Average life Expectancy",
+                                 "Research and Development",
+                                 "Homicides",
+                                 "GDP",
+                                 "Education",
+                                 "CO2"),
+                  selected = "Freedom"),
+      # Input: Select the type of linear fit ----
+      radioButtons("type",
+                   label = "Choose the type of smoothe fit line, lm represents linear fit and loess 
+                   represent the loess smooth fit",
+                   choices = list("lm",
+                                  "loess"),
+                   selected="lm")
       
     ),
     
@@ -48,6 +61,17 @@ server <- function(input, output) {
          xlab = "Waiting time to next eruption (in mins)",
          main = "Histogram of waiting times")
     
+  })
+  output$distPlot<-renderPlotly({
+    
+    plot_ly(CountryData %>% filter(!is.na(var)), x = ~var, color = I("blue")) %>%
+      add_markers(y = ~Happiness.Score, text = ~Country, showlegend = FALSE) %>%
+      add_lines(y = ~fitted(lm(Happiness.Score ~ var)),
+                line = list(color = '#07A4B5'),
+                name = "Lm Smoother", showlegend = TRUE) %>%
+      layout(xaxis = list(title = 'var'),
+             yaxis = list(title = 'Happiness Score'),
+             legend = list(x = 10, y = 1))
   })
   
 }
