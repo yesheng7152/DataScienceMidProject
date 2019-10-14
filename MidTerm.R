@@ -8,6 +8,7 @@ library(readr)
 library(plotly)   # for interactive visuals
 library(stringr)  # to process character strings
 library(forcats)
+
 #Read all the data
 shapeurl <- "https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json"
 WorldCountry <- geojson_read(shapeurl, what = "sp")
@@ -79,44 +80,123 @@ overall<-left_join(x = happiness, y = overall, by = "Country")
 overall[,5:8]<-list(NULL)
 overall[,7:8]<-list(NULL)
 
-CountryData <- left_join(data.frame(Name = WorldCountry$name), overall, by = c("Name" ="Country"))
-head(CountryData)
-CountryData<-filter(CountryData, Happiness.Rank != "NA")
 
+
+CountryData <- left_join(x=data.frame(Id = WorldCountry$id), y=overall, by = c("Id" ="Country.Code"))
+head(CountryData)
+#CountryData<-filter(CountryData, Happiness.Rank != "NA")
+head(CountryData)
 ##### Graphs 
 #Relationship between happyiness score and Freedom
-p <- plot_ly(CountryData, x = ~Freedom, color = I("blue")) %>%
-  add_markers(y = ~Happiness.Score, text = ~Name, showlegend = FALSE) %>%
-  add_lines(y = ~fitted(loess(Happiness.Score ~ Freedom)),
+p <- plot_ly(CountryData %>% filter(!is.na(Freedom)), x = ~Freedom, color = I("blue")) %>%
+  add_markers(y = ~Happiness.Score, text = ~Country, showlegend = FALSE) %>%
+  add_lines(y = ~fitted(lm(Happiness.Score ~ Freedom)),
             line = list(color = '#07A4B5'),
-            name = "Loess Smoother", showlegend = TRUE) %>%
-  layout(xaxis = list(title = 'Happiness Score'),
-         yaxis = list(title = 'Freedom'),
+            name = "Lm Smoother", showlegend = TRUE) %>%
+  layout(xaxis = list(title = 'Freedom'),
+         yaxis = list(title = 'Happiness Score'),
          legend = list(x = 10, y = 1))
 
 #Relationship between happyiness score and Trust Government and Corruption
-p2<- plot_ly(CountryData, x = ~Trust..Government.Corruption., color = I("blue")) %>%
-  add_markers(y = ~Happiness.Score, text = ~Name, showlegend = FALSE) %>%
+p1<- plot_ly(CountryData %>% filter(!is.na(Trust..Government.Corruption.)), x = ~Trust..Government.Corruption., color = I("blue")) %>%
+  add_markers(y = ~Happiness.Score, text = ~Country, showlegend = FALSE) %>%
   add_lines(y = ~fitted(lm(Happiness.Score ~ Trust..Government.Corruption.)),
             line = list(color = '#07A4B5'),
             name = "Lm Smoother", showlegend = TRUE) %>%
-  layout(xaxis = list(title = 'Happiness Score'),
-         yaxis = list(title = 'Trust..Government.Corruption.'),
+  layout(xaxis = list(title = 'Trust..Government.Corruption.'),
+         yaxis = list(title = 'Happiness Score'),
          legend = list(x = 10, y = 1))
 
-#Relationship between happyiness score and Trust Government and Corruption
-ggplot(data=CountryData, aes(x=average, y=Happiness.Score )) +      
-  geom_point(shape = 1, color = "darkorange") +                                     
-  geom_smooth(method=lm,  color="orange") +                  
-  labs(title="Happiness Score and Life Expetency")
+#Relationship between happyiness score and Average Life Expectancy
+p3 <- plot_ly(CountryData %>% filter(!is.na(average)), x = ~average, color = I("blue")) %>%
+  add_markers(y = ~Happiness.Score, text = ~Country, showlegend = FALSE) %>%
+  add_lines(y = ~fitted(lm(Happiness.Score ~ average)),
+            line = list(color = '#07A4B5'),
+            name = "Lm Smoother", showlegend = TRUE) %>%
+  layout(xaxis = list(title = 'Average Life Expectancy'),
+         yaxis = list(title = 'Happiness Score'),
+         legend = list(x = 10, y = 1))
 
-p2<- plot_ly(CountryData, x = ~GDP, color = I("blue")) %>%
-  add_markers(y = ~Happiness.Score, text = ~Name, showlegend = FALSE) %>%
+#Relationship between happyiness score and Research and Development
+p4 <- plot_ly(CountryData %>% filter(!is.na(RD)), x = ~RD, color = I("blue")) %>%
+  add_markers(y = ~Happiness.Score, text = ~Country, showlegend = FALSE) %>%
+  add_lines(y = ~fitted(lm(Happiness.Score ~ RD)),
+            line = list(color = '#07A4B5'),
+            name = "Lm Smoother", showlegend = TRUE) %>%
+  layout(xaxis = list(title = 'Research and Development'),
+         yaxis = list(title = 'Happiness Score'),
+         legend = list(x = 10, y = 1))
+
+#Relationship between happyiness score and Homicides
+p5 <- plot_ly(CountryData %>% filter(!is.na(Homicides)), x = ~Homicides, color = I("blue")) %>%
+  add_markers(y = ~Happiness.Score, text = ~Country, showlegend = FALSE) %>%
+  add_lines(y = ~fitted(lm(Happiness.Score ~ Homicides)),
+            line = list(color = '#07A4B5'),
+            name = "Lm Smoother", showlegend = TRUE) %>%
+  layout(xaxis = list(title = 'Homicides'),
+         yaxis = list(title = 'Happiness Score'),
+         legend = list(x = 10, y = 1))
+
+#Relationship between happyiness score and GDP
+p6 <- plot_ly(CountryData %>% filter(!is.na(GDP)), x = ~GDP, color = I("blue")) %>%
+  add_markers(y = ~Happiness.Score, text = ~Country, showlegend = FALSE) %>%
   add_lines(y = ~fitted(lm(Happiness.Score ~ GDP)),
             line = list(color = '#07A4B5'),
             name = "Lm Smoother", showlegend = TRUE) %>%
-  layout(xaxis = list(title = 'Happiness Score'),
-         yaxis = list(title = 'Trust..Government.Corruption.'),
+  layout(xaxis = list(title = 'GDP'),
+         yaxis = list(title = 'Happiness Score'),
          legend = list(x = 10, y = 1))
 
-CountryData
+#Relationship between happyiness score and Education
+p7 <- plot_ly(CountryData %>% filter(!is.na(Education)), x = ~Education, color = I("blue")) %>%
+  add_markers(y = ~Happiness.Score, text = ~Country, showlegend = FALSE) %>%
+  add_lines(y = ~fitted(lm(Happiness.Score ~ Education)),
+            line = list(color = '#07A4B5'),
+            name = "Lm Smoother", showlegend = TRUE) %>%
+  layout(xaxis = list(title = 'Education'),
+         yaxis = list(title = 'Happiness Score'),
+         legend = list(x = 10, y = 1))
+
+#Relationship between happyiness score and CO2
+p8 <- plot_ly(CountryData %>% filter(!is.na(CO2)), x = ~CO2, color = I("blue")) %>%
+  add_markers(y = ~Happiness.Score, text = ~Country, showlegend = FALSE) %>%
+  add_lines(y = ~fitted(lm(Happiness.Score ~ CO2)),
+            line = list(color = '#07A4B5'),
+            name = "Lm Smoother", showlegend = TRUE) %>%
+  layout(xaxis = list(title = 'CO2'),
+         yaxis = list(title = 'Happiness Score'),
+         legend = list(x = 10, y = 1))
+
+
+#####Maps:
+pal <- colorNumeric(
+  palette = "Blues",
+  domain = CountryData$Happiness.Score)
+myLabels <- paste("<strong>", CountryData$Country, "</strong>", "<br/>", 
+                  "Life Expectancy:", CountryData$Happiness.Score)
+myPopups <- paste("Happy Planet Rank", CountryData$Happiness.Rank)
+
+Map <- leaflet(WorldCountry) %>% addTiles() %>% 
+  addPolygons(
+    fillColor = pal(CountryData$Happiness.Score),
+    weight = 2,
+    opacity = 1,
+    color = "white",
+    fillOpacity = 0.7,
+    highlight = highlightOptions(weight = 3,
+                                 color = "grey",
+                                 fillOpacity = 0.7,
+                                 bringToFront = TRUE),
+    label = lapply(myLabels, HTML),
+    popup = myPopups) %>%
+  addLegend(pal = pal, values = CountryData$Happiness.Score,
+            title = "Life Expectancy", position = "bottomright")
+
+
+
+
+
+
+
+
+
