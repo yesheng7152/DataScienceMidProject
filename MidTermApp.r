@@ -1,5 +1,6 @@
 library(shiny)
 library(plotly)
+load(file = "CountryData.RData")
 # See above for the definitions of ui and server
 ui <- fluidPage(
   # App title ----
@@ -36,7 +37,7 @@ ui <- fluidPage(
     mainPanel(
       
       # Output: Histogram ----
-      plotOutput(outputId = "distPlot")
+      leafletOutput(outputId = "distPlot")
       
     )
   )
@@ -52,26 +53,59 @@ server <- function(input, output) {
   # 1. It is "reactive" and therefore should be automatically
   #    re-executed when inputs (input$bins) change
   # 2. Its output type is a plot
-  output$distPlot <- renderPlot({
+
+  output$distPlot<-renderLeaflet({
+    data <- switch(input$var, 
+                   "Freedom" = CountryData$Freedom,
+                   "Trust Government and Corruption" = CountryData$Trust..Government.Corruption.,
+                   "Average life Expectancy"= CountryData$average,
+                   "Research and Development"= CountryData$RD,
+                   "Homicides" = CountryData$Homicides,
+                   "GDP" = CountryData$GDP,
+                   "Education" = CountryData$Education,
+                   "CO2" = CountryData$CO2)
     
-    x    <- faithful$waiting
-    bins <- seq(min(x), max(x), length.out = input$bins + 1)
+    pal <- colorNumeric(
+      palette = "Blues",
+      domain = CountryData$Happiness.Score)
+    pal2 <- colorNumeric(
+      palette = "Reds",
+      domain = data)
     
-    hist(x, breaks = bins, col = "#75AADB", border = "white",
-         xlab = "Waiting time to next eruption (in mins)",
-         main = "Histogram of waiting times")
+    myLabels <- paste("<strong>", CountryData$Country, "</strong>", "<br/>", 
+                      "Happiness Rank:", CountryData$Happiness.Rank)
+    myPopups <- paste(input$var, data)
+    leaflet(WorldCountry) %>% addTiles() %>% 
+      addPolygons(
+        fillColor = pal(CountryData$Happiness.Score),
+        weight = 2,
+        opacity = 1,
+        color = "white",
+        fillOpacity = 0.8,
+        highlight = highlightOptions(weight = 3,
+                                     color = "grey",
+                                     fillOpacity = 0.5,
+                                     bringToFront = TRUE),
+        label = lapply(myLabels, HTML),
+        popup = myPopups) %>%
+      addPolygons(
+        fillColor = pal2(data),
+        weight = 2,
+        opacity = 1,
+        color = "white",
+        fillOpacity = 0.2,
+        highlight = highlightOptions(weight = 3,
+                                     color = "grey",
+                                     fillOpacity = 0.5,
+                                     bringToFront = TRUE),
+        label = lapply(myLabels, HTML),
+        popup = myPopups)%>%
+      #addLegend(pal = pal, values = CountryData$Happiness.Score,
+      #         title = "Life Expectancy", position = "bottomright")%>%
+      addLegend(pal = pal2, values =data,
+                title = input$var, position = "bottomright")
     
-  })
-  output$distPlot<-renderPlotly({
     
-    plot_ly(CountryData %>% filter(!is.na(var)), x = ~var, color = I("blue")) %>%
-      add_markers(y = ~Happiness.Score, text = ~Country, showlegend = FALSE) %>%
-      add_lines(y = ~fitted(lm(Happiness.Score ~ var)),
-                line = list(color = '#07A4B5'),
-                name = "Lm Smoother", showlegend = TRUE) %>%
-      layout(xaxis = list(title = 'var'),
-             yaxis = list(title = 'Happiness Score'),
-             legend = list(x = 10, y = 1))
   })
   
 }

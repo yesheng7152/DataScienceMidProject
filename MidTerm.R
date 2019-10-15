@@ -83,6 +83,7 @@ overall[,7:8]<-list(NULL)
 
 
 CountryData <- left_join(x=data.frame(Id = WorldCountry$id), y=overall, by = c("Id" ="Country.Code"))
+save(CountryData, file = "CountryData.RData")
 head(CountryData)
 #CountryData<-filter(CountryData, Happiness.Rank != "NA")
 head(CountryData)
@@ -250,5 +251,18 @@ Map <- leaflet(WorldCountry) %>% addTiles() %>%
            title = "Life Expectancy", position = "bottomleft")%>%
   addLegend(pal = pal2, values = CountryData$Freedom,
             title = "Life Expectancy", position = "bottomright")
+
+
+###############Need Fix
+
+
+plot_ly(CountryData %>% filter(!is.na (data)), x = data, color = I("blue")) %>%
+  add_markers(y = ~Happiness.Score, text = ~Country, showlegend = FALSE) %>%
+  add_lines(y = ~fitted(lm(Happiness.Score,data)),
+            line = list(color = '#07A4B5'),
+            name = "Lm Smoother", showlegend = TRUE) %>%
+  layout(xaxis = list(title = 'get(data)'),
+         yaxis = list(title = 'Happiness Score'),
+         legend = list(x = 10, y = 1))
 
 
