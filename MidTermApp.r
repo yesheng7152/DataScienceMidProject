@@ -5,47 +5,55 @@ library(leaflet)
 #install.packages("leaflet")
 load(file = "CountryData.RData")
 # See above for the definitions of ui and server
-ui <- fluidPage(
-  # App title ----
-  titlePanel("Hello Shiny!"),
-  
-  # Select layout with input and output definitions ----
-  sidebarLayout(
+ui <- navbarPage("Title",
+  tabPanel("Map",
+           sidebarPanel(
+           selectInput("var",
+                       label = "Choose a second varible to see its relationship with Happiness Score",
+                       choices = list("Freedom",
+                                      "Trust Government and Corruption",
+                                      "Average life Expectancy",
+                                      "Research and Development",
+                                      "Homicides",
+                                      "GDP",
+                                      "Education",
+                                      "CO2"),
+                       selected = "Freedom")),
+           mainPanel(
+           leafletOutput(outputId = "distPlot")
+           )
+  ),
     
-    # Select panel for inputs ----
-    sidebarPanel(
-      # Input: Select for the variable to see the relationship with Happiness Score ----
-      selectInput("var",
-                  label = "Choose a second varible to see its relationship with Happiness Score",
-                  choices = list("Freedom",
-                                 "Trust Government and Corruption",
-                                 "Average life Expectancy",
-                                 "Research and Development",
-                                 "Homicides",
-                                 "GDP",
-                                 "Education",
-                                 "CO2"),
-                  selected = "Freedom"),
-      # Input: Select the type of linear fit ----
-      radioButtons("type",
-                   label = "Choose the type of smoothe fit line, lm represents linear fit and loess 
+    tabPanel("Relation",
+             sidebarPanel(
+             selectInput("var2",
+                         label = "Choose a second varible to see its relationship with Happiness Score",
+                         choices = list("Freedom",
+                                        "Trust Government and Corruption",
+                                        "Average life Expectancy",
+                                        "Research and Development",
+                                        "Homicides",
+                                        "GDP",
+                                        "Education",
+                                        "CO2"),
+                         selected = "Freedom"),
+             radioButtons("type",
+                          label = "Choose the type of smoothe fit line, lm represents linear fit and loess 
                    represent the loess smooth fit",
-                   choices = list("lm",
-                                  "loess"),
-                   selected="lm")
-      
-    ),
-    
-    # Main panel for displaying outputs ----
-    mainPanel(
-      
-      # Output: Histogram ----
-      leafletOutput(outputId = "distPlot"),
-      plotlyOutput(outputId = "relation")
-      
-    )
-  )
+                          choices = list("lm",
+                                         "loess"),
+                          selected="lm")),
+             mainPanel(
+             plotlyOutput(outputId = "relation"))
+             )
 )
+   
+
+
+      
+
+
+
 
 server <- function(input, output) {
   
@@ -106,12 +114,13 @@ server <- function(input, output) {
         popup = myPopups)})
   
   output$relation<-renderPlotly({
-    plot_ly(CountryData %>% filter(!is.na(get(input$var))), x = ~get(input$var), color = I("blue")) %>%
+
+    plot_ly(CountryData %>% filter(!is.na(get(input$var2))), x = ~get(input$var2), color = I("blue")) %>%
       add_markers(y = ~Happiness.Score, text = ~Country, showlegend = FALSE) %>%
-      add_lines(y = ~fitted(lm(Happiness.Score ~ get(input$var))),
+      add_lines(y = ~fitted(get(input$type)(Happiness.Score ~ get(input$var2))),
                 line = list(color = '#07A4B5'),
                 name = "Lm Smoother", showlegend = TRUE) %>%
-      layout(xaxis = list(title = 'Trust..Government.Corruption.'),
+      layout(xaxis = list(title = 'input$var2'),
              yaxis = list(title = 'Happiness Score'),
              legend = list(x = 10, y = 1))
   })

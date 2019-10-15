@@ -8,7 +8,7 @@ library(readr)
 library(plotly)   # for interactive visuals
 library(stringr)  # to process character strings
 library(forcats)
-
+#install.packages("geojsonio")
 #Read all the data
 shapeurl <- "https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json"
 WorldCountry <- geojson_read(shapeurl, what = "sp")
