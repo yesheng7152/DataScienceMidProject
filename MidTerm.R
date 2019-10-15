@@ -80,8 +80,6 @@ overall<-left_join(x = happiness, y = overall, by = "Country")
 overall[,5:8]<-list(NULL)
 overall[,7:8]<-list(NULL)
 
-
-
 CountryData <- left_join(x=data.frame(Id = WorldCountry$id), y=overall, by = c("Id" ="Country.Code"))
 save(CountryData, file = "CountryData.RData")
 head(CountryData)

@@ -1,5 +1,8 @@
 library(shiny)
 library(plotly)
+library(ggplot2)
+library(leaflet)
+#install.packages("leaflet")
 load(file = "CountryData.RData")
 # See above for the definitions of ui and server
 ui <- fluidPage(
@@ -37,7 +40,8 @@ ui <- fluidPage(
     mainPanel(
       
       # Output: Histogram ----
-      leafletOutput(outputId = "distPlot")
+      leafletOutput(outputId = "distPlot"),
+      plotlyOutput(outputId = "relation")
       
     )
   )
@@ -84,7 +88,7 @@ server <- function(input, output) {
         fillOpacity = 0.8,
         highlight = highlightOptions(weight = 3,
                                      color = "grey",
-                                     fillOpacity = 0.5,
+                                     fillOpacity = 0.8,
                                      bringToFront = TRUE),
         label = lapply(myLabels, HTML),
         popup = myPopups) %>%
@@ -96,16 +100,20 @@ server <- function(input, output) {
         fillOpacity = 0.2,
         highlight = highlightOptions(weight = 3,
                                      color = "grey",
-                                     fillOpacity = 0.5,
+                                     fillOpacity = 0.2,
                                      bringToFront = TRUE),
         label = lapply(myLabels, HTML),
-        popup = myPopups)%>%
-      #addLegend(pal = pal, values = CountryData$Happiness.Score,
-      #         title = "Life Expectancy", position = "bottomright")%>%
-      addLegend(pal = pal2, values =data,
-                title = input$var, position = "bottomright")
-    
-    
+        popup = myPopups)})
+  
+  output$relation<-renderPlotly({
+    plot_ly(CountryData %>% filter(!is.na(get(input$var))), x = ~get(input$var), color = I("blue")) %>%
+      add_markers(y = ~Happiness.Score, text = ~Country, showlegend = FALSE) %>%
+      add_lines(y = ~fitted(lm(Happiness.Score ~ get(input$var))),
+                line = list(color = '#07A4B5'),
+                name = "Lm Smoother", showlegend = TRUE) %>%
+      layout(xaxis = list(title = 'Trust..Government.Corruption.'),
+             yaxis = list(title = 'Happiness Score'),
+             legend = list(x = 10, y = 1))
   })
   
 }
