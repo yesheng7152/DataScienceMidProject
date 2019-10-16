@@ -36,6 +36,8 @@ gdp[,3:59]<-list(NULL)
 gdp[,4:6]<-list(NULL)
 colnames(gdp)[3]<-parse_number(colnames(gdp)[3])
 colnames(gdp)[3]<-"GDP"
+gdp[3]=log(gdp[3]/1000000000, 2)
+head(gdp)
 #Clean homicides data
 homicides[,3:59]<-list(NULL)
 homicides[,4:6]<-list(NULL)
@@ -53,7 +55,7 @@ colnames(lifeMale)[3]<-parse_number(colnames(lifeMale)[3])
 rd[,3:59]<-list(NULL)
 rd[,4:6]<-list(NULL)
 colnames(rd)[3]<-parse_number(colnames(rd)[3])
-colnames(rd)[3]<-"RD"
+colnames(rd)[3]<-"Research and Development"
 #combin data for female and male life expectance 
 life<-full_join(x = lifeFemale, y = lifeMale, by = "Country.Code")
 life[,1]<-list(NULL)
@@ -61,7 +63,7 @@ colnames(life)[2]<-"Female"
 colnames(life)[3]<-"Country"
 colnames(life)[4]<-"Male"
 life<-filter(life, Female != "NA" | Male != "NA")
-life$average = (life$Female+life$Male)/2
+life$`Average Life Expectency` = (life$Female+life$Male)/2
 #Combine the rest of the data frame with the happiness data frame
 overall<- full_join(x=life, y=rd, by="Country.Code") 
 colnames(overall)[3]="Country"
@@ -81,8 +83,9 @@ overall[,5:8]<-list(NULL)
 overall[,7:8]<-list(NULL)
 
 CountryData <- left_join(x=data.frame(Id = WorldCountry$id), y=overall, by = c("Id" ="Country.Code"))
+colnames(CountryData)[7]="Trust in Government"
 save(CountryData, file = "CountryData.RData")
-head(CountryData)
+
 #CountryData<-filter(CountryData, Happiness.Rank != "NA")
 head(CountryData)
 ##### Graphs 
@@ -251,16 +254,6 @@ Map <- leaflet(WorldCountry) %>% addTiles() %>%
             title = "Life Expectancy", position = "bottomright")
 
 
-###############Need Fix
 
-
-plot_ly(CountryData %>% filter(!is.na (data)), x = data, color = I("blue")) %>%
-  add_markers(y = ~Happiness.Score, text = ~Country, showlegend = FALSE) %>%
-  add_lines(y = ~fitted(lm(Happiness.Score,data)),
-            line = list(color = '#07A4B5'),
-            name = "Lm Smoother", showlegend = TRUE) %>%
-  layout(xaxis = list(title = 'get(data)'),
-         yaxis = list(title = 'Happiness Score'),
-         legend = list(x = 10, y = 1))
 
 
