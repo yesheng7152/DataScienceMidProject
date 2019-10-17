@@ -6,10 +6,8 @@ library(tidyr)
 library(ggplot2)   
 library(readr)
 library(plotly)   # for interactive visuals
-library(stringr)  # to process character strings
-library(forcats)
-library(tidyverse)
-library(mapview)
+
+
 #Read all the data
 shapeurl <- "https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json"
 WorldCountry <- geojson_read(shapeurl, what = "sp")
@@ -86,64 +84,7 @@ overall[,7:8]<-list(NULL)
 CountryData <- left_join(x=data.frame(Id = WorldCountry$id), y=overall, by = c("Id" ="Country.Code"))
 colnames(CountryData)[7]="Trust in Government"
 save(CountryData, file = "CountryData.RData")
-
-##### Graphs 
-#Relationship between happyiness score and Freedom
-p <- plot_ly(CountryData %>% filter(!is.na(Freedom)), x = ~Freedom, color = I("blue")) %>%
-  add_markers(y = ~Happiness.Score, text = ~Country, showlegend = FALSE) %>%
-  add_lines(y = ~fitted(lm(Happiness.Score ~ Freedom)),
-            line = list(color = '#07A4B5'),
-            name = "Lm Smoother", showlegend = TRUE) %>%
-  layout(xaxis = list(title = 'Freedom'),
-         yaxis = list(title = 'Happiness Score'),
-         legend = list(x = 10, y = 1))
-
-
-
-#####Maps(2):
-pal <- colorNumeric(
-  palette = "Blues",
-  domain = CountryData$Happiness.Score)
-pal2 <- colorNumeric(
-  palette = "Reds",
-  domain = CountryData$Freedom)
-myLabels <- paste("<strong>", CountryData$Country, "</strong>", "<br/>", 
-                  "Happiness Rank:", CountryData$Happiness.Rank)
-myPopups <- paste("Freedom", CountryData$Freedom)
-Map <- leaflet(WorldCountry) %>% addTiles() %>% 
-  addPolygons(
-    fillColor = pal(CountryData$Happiness.Score),
-    weight = 2,
-    opacity = 1,
-    color = "white",
-    fillOpacity = 0.7,
-    highlight = highlightOptions(weight = 3,
-                                 color = "grey",
-                                 fillOpacity = 0.7,
-                                 bringToFront = TRUE),
-    label = lapply(myLabels, HTML),
-    popup = myPopups) %>%
-  addPolygons(
-    fillColor = pal2(CountryData$Freedom),
-    weight = 2,
-    opacity = 1,
-    color = "white",
-    fillOpacity = 0.3,
-    highlight = highlightOptions(weight = 3,
-                                 color = "grey",
-                                 fillOpacity = 0.3,
-                                 bringToFront = TRUE),
-    label = lapply(myLabels, HTML),
-    popup = myPopups)%>%
-  addLogo("https://github.com/yesheng7152/DataScienceMidProject/blob/master/legend.png?raw=true", 
-          position="bottomright",
-          width = 150,
-          height = 150,
-          alpha = 1)
-  
-
-
-
+write.csv(CountryData,"CountryData.csv")
 bivariate_color_scale<-tibble(
   "3-3"="#3F2949",
   "2-3"="#435786",

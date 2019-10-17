@@ -2,10 +2,12 @@ library(shiny)
 library(plotly)
 library(ggplot2)
 library(leaflet)
-#install.packages("leaflet")
-load(file = "CountryData.RData")
+library(leafem)
+library(DT)
+
+CountryData<-read.csv("CountryData.csv")
 # See above for the definitions of ui and server
-ui <- navbarPage("Title",
+ui <- navbarPage("Happiness In Real Perspective",
   tabPanel("Map",
            sidebarPanel(
            selectInput("var",
@@ -13,12 +15,16 @@ ui <- navbarPage("Title",
                        choices = list("Freedom",
                                       "Trust in Government",
                                       "Average life Expectancy",
-                                      "Research and Development",
-                                      "Homicides",
+                                      "Research and development expenditure (% of GDP)",
+                                      "Homicides (per 100,000 people)",
                                       "Log of GDP in Billions",
-                                      "Education",
-                                      "CO2"),
-                       selected = "Freedom")),
+                                      "Government expenditure on education, total (% of GDP)",
+                                      "CO2 emissions (metric tons per capita)"),
+                       selected = "Freedom"),
+           img(src="https://github.com/yesheng7152/DataScienceMidProject/blob/master/legend.png?raw=true",
+               height='200px',
+               width='200px')
+           ),
            mainPanel(
            leafletOutput(outputId = "distPlot")
            )
@@ -28,14 +34,14 @@ ui <- navbarPage("Title",
              sidebarPanel(
              selectInput("var2",
                          label = "Choose a second varible to see its relationship with Happiness Score",
-                         choices = c("Freedom",
+                         choices = list("Freedom",
                                         "Trust in Government",
-                                        "Average Life Expectency",
-                                        "Research and Development",
-                                        "Homicides",
-                                        "log of GDP in Billion "="GDP",
-                                        "Education",
-                                        "CO2"),
+                                        "Average life Expectancy",
+                                        "Research and development expenditure (% of GDP)",
+                                        "Homicides (per 100,000 people)",
+                                        "Log of GDP in Billions",
+                                        "Government expenditure on education, total (% of GDP)",
+                                        "CO2 emissions (metric tons per capita)"),
                          selected = "Freedom"),
              radioButtons("type",
                           label = "Choose the type of smoothe fit line, lm represents linear fit and loess 
@@ -45,8 +51,13 @@ ui <- navbarPage("Title",
                           selected="lm")),
              mainPanel(
              plotlyOutput(outputId = "relation"))
-             )
+             ),
+  tabPanel("TableSet",
+           h2("Happiness verses other variables"),
+           hr(),
+           DT::dataTableOutput('CountryData'))
 )
+
    
 
 
@@ -57,10 +68,7 @@ ui <- navbarPage("Title",
 
 server <- function(input, output) {
   
-  # Histogram of the Old Faithful Geyser Data ----
-  # with requested number of bins
-  # This expression that generates a histogram is wrapped in a call
-  # to renderPlot to indicate that:
+  # 
   #
   # 1. It is "reactive" and therefore should be automatically
   #    re-executed when inputs (input$bins) change
@@ -69,13 +77,14 @@ server <- function(input, output) {
   output$distPlot<-renderLeaflet({
     data <- switch(input$var, 
                    "Freedom" = CountryData$Freedom,
-                   "Trust in Government" = CountryData$`Trust in Government`,
-                   "Average life Expectancy"= CountryData$`Average Life Expectency`,
-                   "Research and Development"= CountryData$`Research and Development`,
-                   "Homicides" = CountryData$Homicides,
+                   "Trust in Government" = CountryData$Trust.in.Government,
+                   "Average life Expectancy"= CountryData$Average.Life.Expectency,
+                   "Research and development expenditure (% of GDP)"= CountryData$Research.and.Development,
+                   "Homicides (per 100,000 people)" = CountryData$Homicides,
                    "Log of GDP in Billions" = CountryData$GDP,
-                   "Education" = CountryData$Education,
-                   "CO2" = CountryData$CO2)
+                   "Government expenditure on education, total (% of GDP)" = CountryData$Education,
+                   "CO2 emissions (metric tons per capita)" = CountryData$CO2)
+
     
     pal <- colorNumeric(
       palette = "Blues",
@@ -111,24 +120,35 @@ server <- function(input, output) {
                                      fillOpacity = 0.3,
                                      bringToFront = FALSE),
         label = lapply(myLabels, HTML),
-        popup = myPopups) %>%
-      addLogo("https://github.com/yesheng7152/DataScienceMidProject/blob/master/legend.png?raw=true", 
-                                   position="bottomright",
-                                   width = 150,
-                                   height = 150,
-                                   alpha = 1)
+        popup = myPopups)
   })
   
   output$relation<-renderPlotly({
-
-    plot_ly(CountryData %>% filter(!is.na(get(input$var2))), x = ~get(input$var2), color = I("blue")) %>%
+    data2 <- switch(input$var2, 
+                   "Freedom" = "Freedom",
+                   "Trust in Government" = "Trust.in.Government",
+                   "Average life Expectancy"= "Average.Life.Expectency",
+                   "Research and development expenditure (% of GDP)"= "Research.and.Development",
+                   "Homicides (per 100,000 people)" = "Homicides",
+                   "Log of GDP in Billions" = "GDP",
+                   "Government expenditure on education, total (% of GDP)" = "Education",
+                   "CO2 emissions (metric tons per capita)" = "CO2")
+    plot_ly(CountryData %>% filter(!is.na(get(data2))), x = ~get(data2), color = I("blue")) %>%
       add_markers(y = ~Happiness.Score, text = ~Country, showlegend = FALSE) %>%
-      add_lines(y = ~fitted(get(input$type)(Happiness.Score ~ get(input$var2))),
+      add_lines(y = ~fitted(get(input$type)(Happiness.Score ~ get(data2))),
                 line = list(color = '#07A4B5'),
                 name = "Lm Smoother", showlegend = TRUE) %>%
       layout(xaxis = list(title = input$var2),
              yaxis = list(title = 'Happiness Score'),
              legend = list(x = 10, y = 1))
+  })
+  
+  output$CountryData <-DT::renderDataTable({
+    copyCD<-CountryData
+    copyCD<-filter(copyCD,Id != "-99" & Country!="NA")
+    rownames(copyCD)=copyCD[,1]
+    copyCD[1]<-NULL
+    DT::datatable(copyCD,filter="top",rownames=FALSE)
   })
   
 }
