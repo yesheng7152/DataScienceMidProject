@@ -137,7 +137,11 @@ Map <- leaflet(WorldCountry) %>% addTiles() %>%
                                  bringToFront = TRUE),
     label = lapply(myLabels, HTML),
     popup = myPopups)%>%
-  addLogo("https://jeroenooms.github.io/images/banana.gif",position="bottomright", alpha = 0.3)
+  addLogo("https://github.com/yesheng7152/DataScienceMidProject/blob/master/shinyApp/legend.png?raw=true", 
+          position="bottomright",
+          width = 150,
+          height = 150,
+          alpha = 1)
   
 
 
@@ -161,7 +165,7 @@ legend<-bivariate_color_scale%>%
   ggplot(aes(x,y))+
   geom_tile(aes(fill=fill))+
   scale_fill_identity()+
-  labs(x="Freedom",
+  labs(x="Varying Factors",
        y="Happiness Score")
 ggsave("legend.png",plot=legend,
        width = 2, height = 2, bg="transparent")
