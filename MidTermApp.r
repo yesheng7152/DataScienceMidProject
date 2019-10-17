@@ -20,8 +20,7 @@ ui <- navbarPage("Title",
                                       "CO2"),
                        selected = "Freedom")),
            mainPanel(
-           leafletOutput(outputId = "distPlot"),
-           plotOutput(outputId = "legend")
+           leafletOutput(outputId = "distPlot")
            )
   ),
     
@@ -66,29 +65,7 @@ server <- function(input, output) {
   # 1. It is "reactive" and therefore should be automatically
   #    re-executed when inputs (input$bins) change
   # 2. Its output type is a plot
-output$legend<-renderPlot({
-  bivariate_color_scale<-tibble(
-    "3-3"="#3F2949",
-    "2-3"="#435786",
-    "1-3"="#4885C1",
-    "3-2"="#77324C",
-    "2-2"="#806A8A",
-    "1-2"="#89A1C8",
-    "3-1"="#AE3A4E",
-    "2-1"="#BC7C8F",
-    "1-1"="#CABED0"
-  )
-  bivariate_color_scale%>%
-    gather("group","fill")%>%
-    separate(group, into = c("x","y"),sep="-")%>%
-    mutate(x= as.integer(x),
-           y=as.integer(y))%>%
-    ggplot(aes(x,y))+
-    geom_tile(aes(fill=fill))+
-    scale_fill_identity()+
-    labs(x="Freedom",
-         y="Happiness Score")
-})
+
   output$distPlot<-renderLeaflet({
     data <- switch(input$var, 
                    "Freedom" = CountryData$Freedom,
@@ -134,7 +111,13 @@ output$legend<-renderPlot({
                                      fillOpacity = 0.3,
                                      bringToFront = FALSE),
         label = lapply(myLabels, HTML),
-        popup = myPopups)})
+        popup = myPopups) %>%
+      addLogo("https://github.com/yesheng7152/DataScienceMidProject/blob/master/legend.png?raw=true", 
+                                   position="bottomright",
+                                   width = 150,
+                                   height = 150,
+                                   alpha = 1)
+  })
   
   output$relation<-renderPlotly({
 

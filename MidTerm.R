@@ -9,9 +9,7 @@ library(plotly)   # for interactive visuals
 library(stringr)  # to process character strings
 library(forcats)
 library(tidyverse)
-library(cowplot)
 library(mapview)
-install.packages("mapview")
 #Read all the data
 shapeurl <- "https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json"
 WorldCountry <- geojson_read(shapeurl, what = "sp")
@@ -137,7 +135,7 @@ Map <- leaflet(WorldCountry) %>% addTiles() %>%
                                  bringToFront = TRUE),
     label = lapply(myLabels, HTML),
     popup = myPopups)%>%
-  addLogo("https://github.com/yesheng7152/DataScienceMidProject/blob/master/shinyApp/legend.png?raw=true", 
+  addLogo("https://github.com/yesheng7152/DataScienceMidProject/blob/master/legend.png?raw=true", 
           position="bottomright",
           width = 150,
           height = 150,
